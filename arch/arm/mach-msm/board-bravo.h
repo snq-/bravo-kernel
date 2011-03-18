@@ -163,4 +163,7 @@
 #define BRAVO_LCD_DE                 (138)
 #define BRAVO_LCD_ID0		     (147)
 
+#define BRAVO_TPS65023_MIN_UV_MV    (1000)
+#define BRAVO_TPS65023_MAX_UV_MV    (1300)
+
 #endif /* __ARCH_ARM_MACH_MSM_BOARD_BRAVO_H */
