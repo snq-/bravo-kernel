@@ -384,6 +384,9 @@ static DEVICE_ATTR(flag, 0666, htc_show, htc_store);
 static int __init acoustic_init(void)
 {
 	int ret = 0;
+#if defined(CONFIG_HTC_HEADSET_MGR)
+	struct headset_notifier notifier;
+#endif
 	mutex_init(&api_lock);
 	mutex_init(&rpc_connect_lock);
 	ret = misc_register(&acoustic_misc);
@@ -413,7 +416,6 @@ static int __init acoustic_init(void)
 	mutex_init(&acoustic_lock);
 
 #if defined(CONFIG_HTC_HEADSET_MGR)
-	struct headset_notifier notifier;
 	notifier.id = HEADSET_REG_MIC_BIAS;
 	notifier.func = enable_mic_bias;
 	headset_notifier_register(&notifier);
