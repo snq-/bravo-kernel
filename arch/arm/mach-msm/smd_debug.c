@@ -27,7 +27,7 @@
 #include "smd_debug.h"
 
 
-#if CONFIG_SMD_OFFSET_TCXO_STAT
+#if 0 /* CONFIG_SMD_OFFSET_TCXO_STAT */
 enum {
 	F_SCREEN_OFF = 0,
 	F_SUSPEND,
