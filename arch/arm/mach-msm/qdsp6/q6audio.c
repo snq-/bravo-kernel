@@ -681,7 +681,7 @@ static int audio_rx_mute(struct audio_client *ac, uint32_t dev_id, int mute)
 	rpc.mute = !!mute;
 	return audio_ioctl(ac, &rpc, sizeof(rpc));
 }
-
+#if 0
 static int audio_tx_volume(struct audio_client *ac, uint32_t dev_id, int32_t volume)
 {
 	struct adsp_set_dev_volume_command rpc;
@@ -693,7 +693,7 @@ static int audio_tx_volume(struct audio_client *ac, uint32_t dev_id, int32_t vol
 	rpc.volume = volume;
 	return audio_ioctl(ac, &rpc, sizeof(rpc));
 }
-
+#endif
 static int audio_tx_mute(struct audio_client *ac, uint32_t dev_id, int mute)
 {
 	struct adsp_set_dev_mute_command rpc;
@@ -734,7 +734,6 @@ static void callback(void *data, int len, void *cookie)
 {
 	struct adsp_event_hdr *e = data;
 	struct audio_client *ac;
-	struct adsp_buffer_event *abe = data;
 
 	TRACE("audio callback: context %d, event 0x%x, status %d\n",
 	      e->context, e->event_id, e->status);
