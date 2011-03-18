@@ -2863,8 +2863,8 @@ static int s5k3e2fx_set_fps(struct fps_cfg *fps)
 				     s5k3e2fx_reg_pat[S_RES_PREVIEW].blk_l) *
 				    s5k3e2fx_ctrl->fps_divider /
 				    0x400) & 0xFF00));
-#endif
 set_fps_done:
+#endif
 	return rc;
 }
 
@@ -2873,7 +2873,7 @@ static int s5k3e2fx_write_exp_gain(uint16_t gain, uint32_t line)
 	int rc = 0;
 
 	uint16_t max_legal_gain = 0x0200;
-	uint32_t ll_ratio;	/* Q10 */
+//	uint32_t ll_ratio;	/* Q10 */
 	uint32_t ll_pck, fl_lines;
 	uint16_t offset = 4;
 	uint32_t gain_msb, gain_lsb;

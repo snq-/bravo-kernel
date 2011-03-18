@@ -771,7 +771,6 @@ static void vfe_proc_ops(enum VFE_MESSAGE_ID id, void *data)
 {
 	struct msm_vfe_resp *rp;
 	struct vfe_message *msg;
-	struct msm_sync *sync = (struct msm_sync *)ctrl->syncdata;
 
 	CDBG("ctrl->vfeOperationMode = %d, msgId = %d\n",
 	     ctrl->vfeOperationMode, id);
@@ -915,7 +914,6 @@ static void vfe_process_error_irq(struct isr_queue_cmd *qcmd)
 static void vfe_process_camif_epoch1_irq(void)
 {
 	/* Turn on the flash. */
-	struct msm_sync *sync = (struct msm_sync *)ctrl->syncdata;
 	/*remove google flashlight*/
 	/*ctrl->resp->flash_ctrl(sync, MSM_CAMERA_LED_HIGH);*/
 
