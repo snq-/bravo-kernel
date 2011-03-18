@@ -132,9 +132,9 @@ static unsigned int bravo_sd_status;
 static void (*sdslot_status_cb)(int card_present, void *dev_id);
 static void *sdslot_status_cb_devid;
 
-static int microp_check_status(int *st)
+static int microp_check_status(void *st)
 {
-	bravo_sd_status = !((unsigned) *st);
+	bravo_sd_status = !(*(unsigned int *)st);
 
 	if (sdslot_status_cb)
 		sdslot_status_cb(bravo_sd_status, sdslot_status_cb_devid);
