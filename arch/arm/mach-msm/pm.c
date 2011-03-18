@@ -708,7 +708,7 @@ static void msm_pm_power_off(void)
 
 	msm_proc_comm(PCOM_POWER_DOWN, 0, 0);
 
-#if CONFIG_MSM_RMT_STORAGE_SERVER
+#ifdef CONFIG_MSM_RMT_STORAGE_SERVER
 		printk(KERN_INFO "from %s\r\n", __func__);
 		wait_rmt_final_call_back(10);
 		printk(KERN_INFO "back %s\r\n", __func__);
@@ -751,7 +751,7 @@ static void msm_pm_restart(char str)
 	else
 		msm_proc_comm(PCOM_RESET_CHIP, &restart_reason, 0);
 
-#if CONFIG_MSM_RMT_STORAGE_SERVER
+#ifdef CONFIG_MSM_RMT_STORAGE_SERVER
 	printk(KERN_INFO "from %s\r\n", __func__);
 	wait_rmt_final_call_back(10);
 	printk(KERN_INFO "back %s\r\n", __func__);

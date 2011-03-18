@@ -1576,7 +1576,7 @@ void submit_bio(int rw, struct bio *bio)
 				bdevname(bio->bi_bdev, b),
 				count);
 		}
-#if CONFIG_MSM_RMT_STORAGE_SERVER
+#ifdef CONFIG_MSM_RMT_STORAGE_SERVER
 		/* Get process info for the bio of writing radio partition in eMMC boot */
 		char bde[BDEVNAME_SIZE];
 		if (!strcmp(bdevname(bio->bi_bdev, bde), "mmcblk0")) {
