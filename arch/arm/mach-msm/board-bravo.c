@@ -268,7 +268,7 @@ static struct htc_headset_microp_platform_data htc_headset_microp_data = {
 	.hpin_mask		= {0x00, 0x00, 0x04},
 	.remote_int		= 1 << 7,
 	.remote_irq		= MSM_uP_TO_INT(7),
-	.remote_enable_pin	= NULL,
+	.remote_enable_pin	= 0,
 	.adc_channel		= 0x07,
 	.adc_remote		= {0, 31, 43, 98, 129, 192},
 };
@@ -710,9 +710,9 @@ static struct platform_device htc_headset_mgr = {
 };
 
 static struct htc_headset_gpio_platform_data htc_headset_gpio_data = {
-	.hpin_gpio		= NULL,
+	.hpin_gpio		= 0,
 	.key_enable_gpio	= BRAVO_GPIO_35MM_KEY_INT_SHUTDOWN,
-	.mic_select_gpio	= NULL,
+	.mic_select_gpio	= 0,
 };
 
 static struct platform_device htc_headset_gpio = {
@@ -728,7 +728,7 @@ static uint32_t key_int_shutdown_gpio_table[] = {
 		GPIO_OUTPUT, GPIO_NO_PULL, GPIO_2MA),
 };
 
-static void headset_init()
+static void headset_init(void)
 {
 	config_gpio_table(key_int_shutdown_gpio_table,
 		ARRAY_SIZE(key_int_shutdown_gpio_table));
