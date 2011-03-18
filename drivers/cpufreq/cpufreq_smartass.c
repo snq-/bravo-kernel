@@ -492,6 +492,9 @@ static int cpufreq_governor_smartass(struct cpufreq_policy *new_policy,
 		pm_idle = cpufreq_idle;
 
 		this_smartass->cur_policy = new_policy;
+		this_smartass->cur_policy->max = CONFIG_MSM_CPU_FREQ_ONDEMAND_MAX;
+		this_smartass->cur_policy->min = CONFIG_MSM_CPU_FREQ_ONDEMAND_MIN;
+		this_smartass->cur_policy->cur = CONFIG_MSM_CPU_FREQ_ONDEMAND_MAX;
 		this_smartass->enable = 1;
 
 		// notice no break here!
