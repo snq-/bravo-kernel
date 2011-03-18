@@ -277,7 +277,7 @@ static int msm_sleep(int sleep_mode, uint32_t sleep_delay, int from_idle)
 	bool invalid_inital_state = false;
 
 	if (board_mfg_mode() == 4) /*power test mode*/
-		gpio_set_diag_gpio_table(board_get_mfg_sleep_gpio_table());
+		gpio_set_diag_gpio_table((unsigned long*)board_get_mfg_sleep_gpio_table());
 
 	if (msm_pm_debug_mask & MSM_PM_DEBUG_SUSPEND)
 		printk(KERN_INFO "msm_sleep(): mode %d delay %u idle %d\n",
@@ -656,8 +656,6 @@ static int msm_wakeup_after;	/* default, no wakeup by alarm */
 static int msm_power_wakeup_after(const char *val, struct kernel_param *kp)
 {
 	int ret;
-	struct uart_port *port;
-	struct msm_port *msm_port;
 
 	ret = param_set_int(val, kp);
 	printk(KERN_INFO "+msm_power_wakeup_after, ret=%d\r\n", ret);
@@ -741,7 +739,7 @@ void msm_pm_flush_console(void)
 	release_console_sem();
 }
 
-static void msm_pm_restart(char str)
+static void msm_pm_restart(char str, const char *cmd)
 {
 	msm_pm_flush_console();
 
