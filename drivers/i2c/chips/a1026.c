@@ -554,7 +554,7 @@ int build_cmds(char* cmds, int newid)
 }
 int a1026_set_config(char newid, int mode)
 {
-	int i = 0, rc = 0, size = 0;
+	int rc = 0, size = 0;
 	int number_of_cmd_sets, rd_retry_cnt;
 	unsigned int sw_reset = 0;
 	unsigned char *i2c_cmds;
@@ -896,7 +896,6 @@ a1026_ioctl(struct inode *inode, struct file *file, unsigned int cmd,
 	struct a1026img img;
 	struct A1026_config_data cfg;
 	int rc = 0;
-	int i = 0;
 #if ENABLE_DIAG_IOCTLS
 	char msg[4];
 	int mic_cases = 0;

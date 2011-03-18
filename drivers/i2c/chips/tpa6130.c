@@ -80,10 +80,11 @@ void set_headset_amp(int on)
 static int handle_headset_call(struct msm_rpc_server *server,
 			       struct rpc_request_hdr *req, unsigned len)
 {
+	struct rpc_headset_amp_ctl_args *args;
+
 	if (!pdata->enable_rpc_server)
 		return 0;
 
-	struct rpc_headset_amp_ctl_args *args;
 	switch (req->procedure) {
 	case HTC_HEADSET_NULL_PROC:
 		return 0;
