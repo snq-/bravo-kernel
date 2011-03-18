@@ -367,8 +367,8 @@ static void margin_filter(struct synaptics_ts_data *ts, int pos[2][2],
 static int duplicated_filter(struct synaptics_ts_data *ts, int pos[2][2],
 						const int finger2_pressed, const int z)
 {
-	int drift_x[2];
-	int drift_y[2];
+	int drift_x[2] = {0, 0};
+	int drift_y[2] = {0, 0};
 	static int ref_x[2], ref_y[2];
 	uint8_t discard[2] = {0, 0};
 
