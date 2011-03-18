@@ -90,12 +90,12 @@ static struct lcm_cmd lcm_init_666seq[] = {
 		{ 0x26, 0xA0, 0 },
 		{ 0x1D, 0xA0, 250 },
 };
-
+#if 0
 static struct lcm_cmd lcm_wakup_seq[] = {
 		{ 0x1d, 0xa0, 200 },
 		{ 0x14, 0x3 , 100 },
 };
-
+#endif
 static struct lcm_cmd lcm_standby_seq[] = {
 		{0x14, 0x0, 100 },
 		{0x1d, 0xa1, 200 },
