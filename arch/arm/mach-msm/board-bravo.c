@@ -87,7 +87,7 @@ void __init bravo_microp_init(void);
 
 extern int panel_type;
 
-static ssize_t htc_battery_show_attr(struct device *dev,
+extern ssize_t htc_battery_show_attr(/*struct device *dev,*/
 					 struct device_attribute *attr,
 					 char *buf);
 static struct htc_battery_platform_data htc_battery_pdev_data = {

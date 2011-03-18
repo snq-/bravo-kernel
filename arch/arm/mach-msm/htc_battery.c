@@ -43,8 +43,6 @@
 #include <linux/ds2746_battery.h>
 #endif
 
-#include <linux/smb329.h>
-
 static struct wake_lock vbus_wake_lock;
 
 enum {
@@ -1482,8 +1480,6 @@ static int ds2784_notifier_func(struct notifier_block *nfb,
 	case DS2784_CHARGING_CONTROL:
 		if (htc_batt_info.charger == LINEAR_CHARGER)
 			battery_charging_ctrl(arg);
-//		else if(htc_batt_info.charger == SWITCH_CHARGER) 
-//			set_charger_ctrl(arg);
 		break;
 	case DS2784_LEVEL_UPDATE:
 		htc_battery_status_update(arg);

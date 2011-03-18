@@ -27,7 +27,6 @@
 #include <asm/gpio.h>
 #include <linux/delay.h>
 #include <linux/ds2784_battery.h>
-#include <linux/smb329.h>
 #include <mach/htc_battery.h>
 #include <asm/mach-types.h>
 #include "../../arch/arm/mach-msm/proc_comm.h"
@@ -186,7 +185,7 @@ ssize_t htc_battery_show_attr(struct device_attribute *attr,
 		"batt_temp(C): %d;\n"
 		"batt_current(mA): %d;\n"
 		"batt_current_avg(mA): %d;\n"
-		"level(%): %d;\n"
+		"level(%%): %d;\n"
 		"charging_source: %d;\n"
 		"charging_enabled: %d;\n"
 		"acr(mAh): %d;\n"
@@ -643,7 +642,6 @@ static int ds2784_battery_probe(struct platform_device *pdev)
 	return 0;
 
 fail_workqueue:
-fail_register:
 	kfree(di);
 	return rc;
 }
@@ -652,8 +650,6 @@ static int ds2784_battery_remove(struct platform_device *pdev)
 {
 	struct ds2784_device_info *di = platform_get_drvdata(pdev);
 
-	cancel_rearming_delayed_workqueue(di->monitor_wqueue,
-					  &di->monitor_work);
 	destroy_workqueue(di->monitor_wqueue);
 
 	return 0;
