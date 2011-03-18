@@ -59,7 +59,6 @@ struct battery_info_reply {
 	u32 charging_source;	/* 0: no cable, 1:usb, 2:AC */
 	u32 charging_enabled;	/* 0: Disable, 1: Enable */
 	u32 full_bat;		/* Full capacity of battery (mAh) */
-	u32 full_level;		/* Full Level */
 	u32 over_vchg;		/* 0:normal, 1:over voltage charger */
 	s32 eval_current;	/* System loading current from ADC */
 };
