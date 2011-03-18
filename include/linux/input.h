@@ -661,7 +661,6 @@ struct input_absinfo {
 #define ABS_MT_BLOB_ID		0x38	/* Group a set of packets as a blob */
 #define ABS_MT_TRACKING_ID	0x39	/* Unique ID of initiated contact */
 
-
 #define ABS_MAX			0x3f
 #define ABS_CNT			(ABS_MAX+1)
 
