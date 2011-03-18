@@ -1,6 +1,8 @@
 #ifndef _MSM_PANEL_H_
 #define _MSM_PANEL_H_
 
+#include <mach/msm_fb.h>
+
 struct panel_platform_data {
 	struct resource *fb_res;
 	int (*power)(int on);
