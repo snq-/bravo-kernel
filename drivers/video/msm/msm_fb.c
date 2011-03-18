@@ -452,7 +452,7 @@ static int display_notifier_callback(struct notifier_block *nfb,
 		unsigned long action,                       
 		void *ignored)                              
 {                                                                                
-	struct msmfb_info *msm_fb = (struct msmfb_info *)ignored;
+//	struct msmfb_info *msm_fb = (struct msmfb_info *)ignored;
 	
 	switch (action) {
 	case NOTIFY_MSM_FB:
@@ -522,7 +522,6 @@ static void msmfb_resume_handler(struct early_suspend *h)
 					early_suspend);
 #ifdef CONFIG_HTC_ONMODE_CHARGING
 	if (msmfb->fb_resumed == 1) {
-		struct msm_panel_data *panel = msmfb->panel;
 		DLOG(SUSPEND_RESUME, "fb is resumed by onchg. skip resume\n");
 		return;
 	}
@@ -931,7 +930,7 @@ static struct file_operations debug_fops = {
 };
 #endif
 
-#define BITS_PER_PIXEL 16
+#define MSMFB_BITS_PER_PIXEL 16
 
 static void setup_fb_info(struct msmfb_info *msmfb)
 {
@@ -955,7 +954,7 @@ static void setup_fb_info(struct msmfb_info *msmfb)
 	fb_info->var.height = msmfb->panel->fb_data->height;
 	fb_info->var.xres_virtual = msmfb->xres;
 	fb_info->var.yres_virtual = msmfb->yres * 2;
-	fb_info->var.bits_per_pixel = BITS_PER_PIXEL;
+	fb_info->var.bits_per_pixel = MSMFB_BITS_PER_PIXEL;
 	fb_info->var.accel_flags = 0;
 
 	fb_info->var.yoffset = 0;

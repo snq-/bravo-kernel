@@ -253,7 +253,7 @@ static void mdp_dmas_to_mddi(void *priv, uint32_t addr, uint32_t stride,
 {
 	struct mdp_info *mdp = priv;
 	uint32_t dma2_cfg;
-	uint32_t video_packet_parameter;
+	uint32_t video_packet_parameter = MDDI_VDO_PACKET_DESC_RGB565;
 	uint16_t ld_param = 1;
 
 	dma2_cfg = DMA_PACK_TIGHT |
@@ -702,6 +702,7 @@ end:
 	return ret;
 }
 
+#if 0
 int mdp_fb_mirror(struct mdp_device *mdp_dev,
 		struct fb_info *src_fb, struct fb_info *dst_fb,
 		struct mdp_blit_req *req)
@@ -732,6 +733,7 @@ err_bad_blit:
 err_wait_failed:
 	return ret;
 }
+#endif
 
 void mdp_set_grp_disp(struct mdp_device *mdp_dev, unsigned disp_id)
 {
