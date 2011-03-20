@@ -224,10 +224,9 @@ Let algorithm machine to judge latest state */
 		return NOTIFY_OK;
 	}
 	htc_batt_info.rep.charging_source = cable_type;
-	htc_batt_info.rep.charging_enabled = cable_type;
 
 	ds2784_blocking_notify(DS2784_CHARGING_CONTROL,
-		&htc_batt_info.rep.charging_enabled);
+		&htc_batt_info.rep.charging_source);
 
 	return NOTIFY_OK;
 }
