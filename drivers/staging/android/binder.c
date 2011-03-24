@@ -1801,7 +1801,7 @@ int binder_thread_write(struct binder_proc *proc, struct binder_thread *thread,
 			    (cmd == BC_INCREFS || cmd == BC_ACQUIRE)) {
 				ref = binder_get_ref_for_node(proc,
 					       binder_context_mgr_node);
-				if (ref->desc != target) {
+				if (ref && (ref->desc != target)) {
 					binder_user_error("binder: %d:"
 						"%d tried to acquire "
 						"reference to desc 0, "
