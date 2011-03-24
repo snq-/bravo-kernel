@@ -73,6 +73,9 @@ static uint32_t lowmem_deathpending_retries = 0;
 
 static uint32_t lowmem_max_deathpending_retries = 1000;
 
+static int task_notifier_registered = 0;
+spinlock_t task_notifier_lock;
+
 #define lowmem_print(level, x...)			\
 	do {						\
 		if (lowmem_debug_level >= (level))	\
@@ -81,6 +84,8 @@ static uint32_t lowmem_max_deathpending_retries = 1000;
 
 static int
 task_notify_func(struct notifier_block *self, unsigned long val, void *data);
+static void task_notifier_register(void);
+static void task_notifier_unregister(void);
 
 static struct notifier_block task_nb = {
 	.notifier_call	= task_notify_func,
@@ -92,11 +97,33 @@ task_notify_func(struct notifier_block *self, unsigned long val, void *data)
 	struct task_struct *task = data;
 	if (task == lowmem_deathpending) {
 		lowmem_deathpending = NULL;
-		task_free_unregister(&task_nb);
+		task_notifier_unregister();
 		lowmem_print(2, "deathpending end %d (%s)\n",
 			task->pid, task->comm);
 	}
 	return NOTIFY_OK;
+}
+
+static void task_notifier_register(void)
+{
+	unsigned long flags;
+	spin_lock_irqsave(&task_notifier_lock, flags);
+	if(!task_notifier_registered) {
+		task_free_register(&task_nb);
+		task_notifier_registered = 1;
+	}
+	spin_unlock_irqrestore(&task_notifier_lock, flags);
+}
+
+static void task_notifier_unregister(void)
+{
+	unsigned long flags;
+	spin_lock_irqsave(&task_notifier_lock, flags);
+	if(task_notifier_registered) {
+		task_notifier_registered = 0;
+		task_free_unregister(&task_nb);
+	}
+	spin_unlock_irqrestore(&task_notifier_lock, flags);
 }
 
 static void dump_deathpending(struct task_struct *t_deathpending)
@@ -163,7 +190,7 @@ static int lowmem_shrink(int nr_to_scan, gfp_t gfp_mask)
 		if (lowmem_deathpending_retries++ < lowmem_max_deathpending_retries)
 			return 0;
 		else
-			task_free_unregister(&task_nb);
+			task_notifier_unregister();
 	}
 
 	if (lowmem_adj_size < array_size)
@@ -244,9 +271,11 @@ static int lowmem_shrink(int nr_to_scan, gfp_t gfp_mask)
 		if (!ignore_lowmem_deathpending) {
 			lowmem_deathpending = selected;
 			lowmem_deathpending_retries = 0;
-			task_free_register(&task_nb);
+			lowmem_print(1, "registering notifier");
+			task_notifier_register();
 		}
 		force_sig(SIGKILL, selected);
+		lowmem_print(1, "...done.\n");
 		rem -= selected_tasksize;
 	}
 	else {
@@ -267,6 +296,7 @@ static struct shrinker lowmem_shrinker = {
 static int __init lowmem_init(void)
 {
 	register_shrinker(&lowmem_shrinker);
+	spin_lock_init(&task_notifier_lock);
 	return 0;
 }
 
