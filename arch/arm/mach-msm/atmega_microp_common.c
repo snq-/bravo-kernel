@@ -250,7 +250,7 @@ int microp_read_adc(uint8_t *data)
 		ret = -EIO;
 		goto exit;
 	}
-	memset(data, 0x00, sizeof(data));
+	memset(data, 0x00, 2);
 	if (i2c_read_block(client, MICROP_I2C_RCMD_ADC_VALUE, data, 2) < 0) {
 		dev_err(&client->dev, "%s: read adc fail\n", __func__);
 		ret = -EIO;
@@ -276,7 +276,7 @@ int microp_read_gpio_status(uint8_t *data)
 		length = 2;
 	else
 		length = 3;
-	memset(data, 0x00, sizeof(data));
+	memset(data, 0x00, length);
 	if (i2c_read_block(client, MICROP_I2C_RCMD_GPIO_STATUS,
 			data, length) < 0) {
 		dev_err(&client->dev, "%s: read gpio status fail\n", __func__);
@@ -399,7 +399,6 @@ static ssize_t microp_reset_store(struct device *dev,
 				   const char *buf, size_t count)
 {
 	struct i2c_client *client;
-	struct microp_i2c_client_data *cdata;
 	int val;
 
 	val = -1;
@@ -408,7 +407,6 @@ static ssize_t microp_reset_store(struct device *dev,
 		return -EINVAL;
 
 	client = to_i2c_client(dev);
-	cdata = i2c_get_clientdata(client);
 
 	microp_reset_microp(client);
 	if (board_ops->init_microp_func)
@@ -437,7 +435,6 @@ static ssize_t microp_gpio_store(struct device *dev,
 				   const char *buf, size_t count)
 {
 	struct i2c_client *client;
-	struct microp_i2c_client_data *cdata;
 	int enable = 0, tmp[3] = {0, 0, 0};
 	uint8_t addr, data[3] = {0, 0, 0};
 
@@ -447,7 +444,6 @@ static ssize_t microp_gpio_store(struct device *dev,
 		return -EINVAL;
 
 	client = to_i2c_client(dev);
-	cdata = i2c_get_clientdata(client);
 
 	if (enable)
 		addr = MICROP_I2C_WCMD_GPO_LED_STATUS_EN;
@@ -456,7 +452,9 @@ static ssize_t microp_gpio_store(struct device *dev,
 	data[0] = (uint8_t)tmp[0];
 	data[1] = (uint8_t)tmp[1];
 	data[2] = (uint8_t)tmp[2];
-	i2c_write_block(client, addr, data, 3);
+
+	if (i2c_write_block(client, addr, data, 3) < 0)
+		printk(KERN_ERR "%s: i2c_write_block failed\n", __func__);
 
 	return count;
 }
