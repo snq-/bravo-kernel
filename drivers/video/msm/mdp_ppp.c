@@ -640,7 +640,7 @@ int mdp_ppp_blit(const struct mdp_info *mdp, struct mdp_blit_req *req,
 
 int mdp_get_bytes_per_pixel(int format)
 {
-	if (format < 0 || format >= MDP_IMGTYPE_LIMIT)
+	if (format < 0 || format > ARRAY_SIZE(bytes_per_pixel))
 		return -1;
 	return bytes_per_pixel[format];
 }
