@@ -900,8 +900,7 @@ static void handle_endpoint(struct usb_info *ui, unsigned bit)
 		req->live = 0;
 		if (req->dead)
 			do_free_req(ui, req);
-
-		if (req->req.complete) {
+		else if (req->req.complete) {
 			spin_unlock_irqrestore(&ui->lock, flags);
 			req->req.complete(&ept->ep, &req->req);
 			spin_lock_irqsave(&ui->lock, flags);
@@ -980,7 +979,8 @@ static void flush_endpoint_sw(struct msm_endpoint *ept)
 		}
 		if (req->dead)
 			do_free_req(ui, req);
-		req = req->next;
+		else
+			req = req->next;
 	}
 	spin_unlock_irqrestore(&ui->lock, flags);
 }
@@ -1151,12 +1151,12 @@ static ssize_t store_usb_serial_number(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
 	struct msm_hsusb_platform_data *pdata = dev->platform_data;
+	char *serialno = "000000000000";
 
 	if (buf[0] == '0' || buf[0] == '1') {
 		memset(mfg_df_serialno, 0x0, sizeof(mfg_df_serialno));
 		if (buf[0] == '0') {
-			strncpy(mfg_df_serialno, "000000000000",
-				strlen("000000000000"));
+			strncpy(mfg_df_serialno, serialno, strlen(serialno));
 			use_mfg_serialno = 1;
 			android_set_serialno(mfg_df_serialno);
 		} else {
@@ -2364,6 +2364,7 @@ static int msm72k_probe(struct platform_device *pdev)
 	struct usb_info *ui;
 	int irq;
 	int ret;
+	char *serialno = "000000000000";
 
 	INFO("msm72k_probe\n");
 	ui = kzalloc(sizeof(struct usb_info), GFP_KERNEL);
@@ -2478,7 +2479,7 @@ static int msm72k_probe(struct platform_device *pdev)
 	}
 	else
 		use_mfg_serialno = 0;
-	strncpy(mfg_df_serialno, "000000000000", strlen("000000000000"));
+	strncpy(mfg_df_serialno, serialno, strlen(serialno));
 
 	return 0;
 }
