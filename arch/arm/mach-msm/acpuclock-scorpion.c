@@ -599,7 +599,7 @@ ssize_t acpuclk_get_vdd_levels_str(char *buf)
 void acpuclk_set_vdd(unsigned acpu_khz, int vdd)
 {
 	int i;
-	vdd = vdd / 25 * 25;	//! regulator only accepts multiples of 25 (mV)
+	vdd = (vdd / BRAVO_TPS65023_UV_STEP_MV) * BRAVO_TPS65023_UV_STEP_MV;
 	mutex_lock(&drv_state.lock);
 	for (i = 0; acpu_freq_tbl[i].acpu_khz; i++)
 	{
@@ -614,4 +614,20 @@ void acpuclk_set_vdd(unsigned acpu_khz, int vdd)
 	mutex_unlock(&drv_state.lock);
 }
 
+unsigned int acpuclk_get_vdd_min(void)
+{
+	return BRAVO_TPS65023_MIN_UV_MV;
+}
+
+unsigned int acpuclk_get_vdd_max(void)
+{
+	return BRAVO_TPS65023_MAX_UV_MV;
+}
+
+unsigned int acpuclk_get_vdd_step(void)
+{
+	return BRAVO_TPS65023_UV_STEP_MV;
+
+}
 #endif
+
