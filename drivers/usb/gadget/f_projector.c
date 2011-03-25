@@ -756,7 +756,7 @@ static int projector_bind_config(struct usb_configuration *c)
 	dev->function.disable = projector_function_disable;
 
 	/* start disabled */
-	dev->function.hidden = 1;
+	dev->function.disabled = 1;
 
 	msmfb_get_var(&fb_info);
 	dev->bitsPixel = BITSPIXEL;

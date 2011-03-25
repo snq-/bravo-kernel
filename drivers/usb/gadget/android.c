@@ -307,7 +307,7 @@ static int product_matches_functions(struct android_usb_product *p)
 {
 	struct usb_function		*f;
 	list_for_each_entry(f, &android_config_driver.functions, list) {
-		if (product_has_function(p, f) == !!f->hidden)
+		if (product_has_function(p, f) == !!f->disabled)
 			return 0;
 	}
 	return 1;
@@ -421,7 +421,7 @@ int android_show_function(char *buf)
 	struct usb_function		*f;
 	list_for_each_entry(f, &android_config_driver.functions, list) {
 		length += sprintf(buf + length, "%s:%s\n", f->name,
-			(f->hidden)?"disable":"enable");
+			(f->disabled)?"disable":"enable");
 	}
 	return length;
 }
@@ -435,34 +435,34 @@ int android_switch_function(unsigned func)
 	list_for_each_entry(f, &android_config_driver.functions, list) {
 		if ((func & (1 << USB_FUNCTION_UMS)) &&
 			!strcmp(f->name, "usb_mass_storage"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_ADB)) &&
 			!strcmp(f->name, "adb"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_RNDIS)) &&
 			!strcmp(f->name, "ether"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_DIAG)) &&
 			!strcmp(f->name, "diag"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_MODEM)) &&
 			!strcmp(f->name, "modem"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_SERIAL)) &&
 			!strcmp(f->name, "serial"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_MTP)) &&
 			!strcmp(f->name, "mtp"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		/* also enable adb with MTP function */
 		else if ((func & (1 << USB_FUNCTION_MTP)) &&
 			!strcmp(f->name, "adb"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_PROJECTOR)) &&
 			!strcmp(f->name, "projector"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else
-			f->hidden = 1;
+			usb_function_set_enabled(f, 0);
 	}
 	product_id = get_product_id(dev);
 	device_desc.idProduct = __constant_cpu_to_le16(product_id);
@@ -497,8 +497,8 @@ void android_enable_function(struct usb_function *f, int enable)
 	int disable = !enable;
 	int product_id;
 
-	if (!!f->hidden != disable) {
-		f->hidden = disable;
+	if (!!f->disabled != disable) {
+		usb_function_set_enabled(f, !disable);
 
 #ifdef CONFIG_USB_ANDROID_RNDIS
 		if (!strcmp(f->name, "ether")) {
@@ -521,7 +521,7 @@ void android_enable_function(struct usb_function *f, int enable)
 			 */
 			list_for_each_entry(func, &android_config_driver.functions, list) {
 				if (!strcmp(func->name, "usb_mass_storage")) {
-					func->hidden = enable;
+					usb_function_set_enabled(f, !enable);
 					break;
 				}
 			}
