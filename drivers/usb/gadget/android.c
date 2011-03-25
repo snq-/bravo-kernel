@@ -521,7 +521,7 @@ void android_enable_function(struct usb_function *f, int enable)
 			 */
 			list_for_each_entry(func, &android_config_driver.functions, list) {
 				if (!strcmp(func->name, "usb_mass_storage")) {
-					usb_function_set_enabled(f, !enable);
+					usb_function_set_enabled(func, !enable);
 					break;
 				}
 			}
@@ -536,13 +536,7 @@ void android_enable_function(struct usb_function *f, int enable)
 #ifdef CONFIG_USB_GADGET_MSM_72K
 	msm_hsusb_request_reset();
 #else
-		/* force reenumeration */
-		if (dev->cdev && dev->cdev->gadget &&
-				dev->cdev->gadget->speed != USB_SPEED_UNKNOWN) {
-			usb_gadget_disconnect(dev->cdev->gadget);
-			msleep(10);
-			usb_gadget_connect(dev->cdev->gadget);
-		}
+	usb_composite_force_reset(dev->cdev);
 #endif
 	}
 }
