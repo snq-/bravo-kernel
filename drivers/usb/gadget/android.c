@@ -499,16 +499,14 @@ void android_enable_function(struct usb_function *f, int enable)
 
 	if (!!f->hidden != disable) {
 		f->hidden = disable;
-		product_id = get_product_id(dev);
-		device_desc.idProduct = __constant_cpu_to_le16(product_id);
-		if (dev->cdev)
-			dev->cdev->desc.idProduct = device_desc.idProduct;
 
 #ifdef CONFIG_USB_ANDROID_RNDIS
-		/* We need to specify the COMM class in the device descriptor
-		* if we are using RNDIS.
-		*/
 		if (!strcmp(f->name, "ether")) {
+			struct usb_function		*func;
+
+			/* We need to specify the COMM class in the device descriptor
+			 * if we are using RNDIS.
+			 */
 			if (enable)
 #ifdef CONFIG_USB_ANDROID_RNDIS_WCEIS
 				dev->cdev->desc.bDeviceClass = USB_CLASS_WIRELESS_CONTROLLER;
@@ -517,8 +515,23 @@ void android_enable_function(struct usb_function *f, int enable)
 #endif
 			else
 				dev->cdev->desc.bDeviceClass = USB_CLASS_PER_INTERFACE;
+
+			/* Windows does not support other interfaces when RNDIS is enabled,
+			 * so we disable UMS when RNDIS is on.
+			 */
+			list_for_each_entry(func, &android_config_driver.functions, list) {
+				if (!strcmp(func->name, "usb_mass_storage")) {
+					func->hidden = enable;
+					break;
+				}
+			}
 		}
 #endif
+
+		product_id = get_product_id(dev);
+		device_desc.idProduct = __constant_cpu_to_le16(product_id);
+		if (dev->cdev)
+			dev->cdev->desc.idProduct = device_desc.idProduct;
 
 #ifdef CONFIG_USB_GADGET_MSM_72K
 	msm_hsusb_request_reset();
