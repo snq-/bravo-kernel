@@ -510,7 +510,11 @@ void android_enable_function(struct usb_function *f, int enable)
 		*/
 		if (!strcmp(f->name, "ether")) {
 			if (enable)
+#ifdef CONFIG_USB_ANDROID_RNDIS_WCEIS
+				dev->cdev->desc.bDeviceClass = USB_CLASS_WIRELESS_CONTROLLER;
+#else
 				dev->cdev->desc.bDeviceClass = USB_CLASS_COMM;
+#endif
 			else
 				dev->cdev->desc.bDeviceClass = USB_CLASS_PER_INTERFACE;
 		}
