@@ -27,7 +27,7 @@
 #include "smd_debug.h"
 
 
-#if 0 /* CONFIG_SMD_OFFSET_TCXO_STAT */
+#if defined(CONFIG_DEBUG_FS)
 enum {
 	F_SCREEN_OFF = 0,
 	F_SUSPEND,
@@ -50,8 +50,12 @@ struct smem_sleep_stat {
 static struct smem_sleep_stat *sleep_stat;
 static struct smem_sleep_stat *get_smem_sleep_stat(void)
 {
+#if CONFIG_SMD_OFFSET_TCXO_STAT
 	return (struct smem_sleep_stat *)
 		(MSM_SHARED_RAM_BASE + CONFIG_SMD_OFFSET_TCXO_STAT);
+#else
+	return 0;
+#endif
 }
 
 static void print_sleep_stat(int flag)
@@ -64,7 +68,7 @@ static void print_sleep_stat(int flag)
 	if (!sleep_stat)
 		return;
 
-	pr_info("sleep_stat.%d: %ds %d %ds %d - "
+	pr_info("sleep_stat.%d: %dms %d %dms %d - "
 		"%d %d %d - %d %d - %d %d %d %d %d"
 		"(%d-%02d-%02d %02d:%02d:%02d.%09lu UTC)\n",
 		flag, sleep_stat->tcxo_time, sleep_stat->tcxo_cnt,
@@ -114,9 +118,6 @@ static struct early_suspend sleep_stat_screen_hdl = {
 	.suspend = sleep_stat_early_suspend,
 	.resume = sleep_stat_late_resume,
 };
-#endif
-
-#if defined(CONFIG_DEBUG_FS)
 
 static char *chstate(unsigned n)
 {
