@@ -377,7 +377,10 @@ static int config_buf(struct usb_configuration *config,
 			if (intf->bDescriptorType == USB_DT_INTERFACE) {
 				intf->bInterfaceNumber = interfaceCount;
 				intf = (struct usb_interface_descriptor *)descriptor;
-				intf->bInterfaceNumber = interfaceCount++;
+				if (intf->bAlternateSetting == 0)
+					intf->bInterfaceNumber = interfaceCount++;
+				else
+					intf->bInterfaceNumber = interfaceCount - 1;
 				if (iad) {
 					iad->bFirstInterface =
 							intf->bInterfaceNumber;
