@@ -630,7 +630,7 @@ static int adb_function_set_alt(struct usb_function *f,
 	while ((req = req_get(dev, &dev->rx_done)))
 		req_put(dev, &dev->rx_idle, req);
 
-	dev->online = !dev->function.hidden;
+	dev->online = !dev->function.disabled;
 
 	/* readers may be blocked waiting for us to go online */
 	wake_up(&dev->read_wq);
@@ -696,7 +696,7 @@ static int adb_bind_config(struct usb_configuration *c)
 	dev->maxsize = 512;
 
 	if (board_mfg_mode() != 2)
-		dev->function.hidden = 1;
+		dev->function.disabled = 1;
 
 	/* _adb_dev must be set before calling usb_gadget_register_driver */
 	_adb_dev = dev;

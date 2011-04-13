@@ -2432,7 +2432,7 @@ static int do_set_config(struct fsg_dev *fsg, u8 new_config)
 	if (new_config != 0)
 		fsg->config = new_config;
 
-	if (new_config || fsg->function.hidden) {
+	if (new_config || fsg->function.disabled) {
 		fsg->ums_state = new_config;
 		printk(KERN_INFO "ums: set state %d\n", new_config);
 		switch_set_state(&fsg->sdev, new_config);

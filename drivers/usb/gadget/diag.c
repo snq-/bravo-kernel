@@ -352,7 +352,7 @@ static long diag_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		wake_up(&ctxt->read_wq);
 	break;
 	case USB_DIAG_FUNC_IOC_ENABLE_GET:
-		tmp_value = !_context.function.hidden;
+		tmp_value = !_context.function.disabled;
 		if (copy_to_user(argp, &tmp_value, sizeof(tmp_value)))
 			return -EFAULT;
 	break;
@@ -1131,7 +1131,7 @@ static int diag_function_set_alt(struct usb_function *f,
 		usb_ep_disable(ctxt->in);
 		return ret;
 	}
-	ctxt->online = !ctxt->function.hidden;
+	ctxt->online = !ctxt->function.disabled;
 
 #if ROUTE_TO_USERSPACE
 	/* recycle unhandled rx reqs to user if any */
@@ -1251,7 +1251,7 @@ module_param_call(tx_rx_count, NULL, diag_get_tx_rx_count, NULL, 0444);
 
 static int diag_get_enabled(char *buffer, struct kernel_param *kp)
 {
-	buffer[0] = '0' + !_context.function.hidden;
+	buffer[0] = '0' + !_context.function.disabled;
 	return 1;
 }
 module_param_call(enabled, diag_set_enabled, diag_get_enabled, NULL, 0664);
@@ -1280,8 +1280,8 @@ int diag_bind_config(struct usb_configuration *c)
 	ctxt->function.set_alt = diag_function_set_alt;
 	ctxt->function.disable = diag_function_disable;
 
-	ctxt->function.hidden = !_context.function_enable;
-	if (!ctxt->function.hidden)
+	ctxt->function.disabled = !_context.function_enable;
+	if (!ctxt->function.disabled)
 		smd_diag_enable("diag_bind_config", 1);
 
 	return usb_add_function(c, &ctxt->function);

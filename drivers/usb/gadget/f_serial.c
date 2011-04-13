@@ -773,7 +773,7 @@ int gser_bind_config(struct usb_configuration *c, u8 port_num)
 	gser->port.disconnect = gser_disconnect;
 	gser->port.send_break = gser_send_break;
 #endif
-	gser->port.func.hidden = 1;
+	gser->port.func.disabled = 1;
 	gser->disabled = 1;
 
 	status = usb_add_function(c, &gser->port.func);
@@ -797,7 +797,7 @@ static int modem_set_enabled(const char *val, struct kernel_param *kp)
 
 static int modem_get_enabled(char *buffer, struct kernel_param *kp)
 {
-	buffer[0] = '0' + !modem_function->hidden;
+	buffer[0] = '0' + !modem_function->disabled;
 	printk(KERN_INFO "%s: %d\n", __func__, buffer[0] - '0');
 	return 1;
 }
@@ -818,7 +818,7 @@ static int serial_set_enabled(const char *val, struct kernel_param *kp)
 
 static int serial_get_enabled(char *buffer, struct kernel_param *kp)
 {
-	buffer[0] = '0' + !serial_function->hidden;
+	buffer[0] = '0' + !serial_function->disabled;
 	printk(KERN_INFO "%s: %d\n", __func__, buffer[0] - '0');
 	return 1;
 }

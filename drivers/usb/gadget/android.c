@@ -118,6 +118,7 @@ struct android_dev {
 	int num_functions;
 	char **functions;
 
+	int vendor_id;
 	int product_id;
 	int version;
 };
@@ -161,7 +162,7 @@ static struct usb_device_descriptor device_desc = {
 };
 
 static struct list_head _functions = LIST_HEAD_INIT(_functions);
-static int _registered_function_count = 0;
+static bool _are_functions_bound;
 static int get_product_id(struct android_dev *dev);
 
 void android_usb_set_connected(int connected)
@@ -184,6 +185,50 @@ static struct android_usb_function *get_function(const char *name)
 	return 0;
 }
 
+static bool are_functions_registered(struct android_dev *dev)
+{
+	char **functions = dev->functions;
+	int i;
+
+	/* Look only for functions required by the board config */
+	for (i = 0; i < dev->num_functions; i++) {
+		char *name = *functions++;
+		bool is_match = false;
+		/* Could reuse get_function() here, but a reverse search
+		 * should yield less comparisons overall */
+		struct android_usb_function *f;
+		list_for_each_entry_reverse(f, &_functions, list) {
+			if (!strcmp(name, f->name)) {
+				is_match = true;
+				break;
+			}
+		}
+		if (is_match)
+			continue;
+		else
+			return false;
+	}
+
+	return true;
+}
+
+static bool should_bind_functions(struct android_dev *dev)
+{
+	/* Don't waste time if the main driver hasn't bound */
+	if (!dev->config)
+		return false;
+
+	/* Don't waste time if we've already bound the functions */
+	if (_are_functions_bound)
+		return false;
+
+	/* This call is the most costly, so call it last */
+	if (!are_functions_registered(dev))
+		return false;
+
+	return true;
+}
+
 static void bind_functions(struct android_dev *dev)
 {
 	struct android_usb_function	*f;
@@ -204,17 +249,18 @@ static void bind_functions(struct android_dev *dev)
 	device_desc.idProduct = __constant_cpu_to_le16(product_id);
 	if (dev->cdev)
 		dev->cdev->desc.idProduct = device_desc.idProduct;
+
+	_are_functions_bound = true;
 }
 
-static int __init android_bind_config(struct usb_configuration *c)
+static int android_bind_config(struct usb_configuration *c)
 {
 	struct android_dev *dev = _android_dev;
 
 	printk(KERN_DEBUG "android_bind_config\n");
 	dev->config = c;
 
-	/* bind our functions if they have all registered */
-	if (_registered_function_count == dev->num_functions)
+	if (should_bind_functions(dev))
 		bind_functions(dev);
 
 	return 0;
@@ -297,7 +343,13 @@ static int product_has_function(struct android_usb_product *p,
 	int i;
 
 	for (i = 0; i < count; i++) {
-		if (!strcmp(name, *functions++))
+		/* For functions with multiple instances, usb_function.name
+		 * will have an index appended to the core name (ex: acm0),
+		 * while android_usb_product.functions[i] will only have the
+		 * core name (ex: acm). So, only compare up to the length of
+		 * android_usb_product.functions[i].
+		 */
+		if (!strncmp(name, functions[i], strlen(functions[i])))
 			return 1;
 	}
 	return 0;
@@ -307,10 +359,26 @@ static int product_matches_functions(struct android_usb_product *p)
 {
 	struct usb_function		*f;
 	list_for_each_entry(f, &android_config_driver.functions, list) {
-		if (product_has_function(p, f) == !!f->hidden)
+		if (product_has_function(p, f) == !!f->disabled)
 			return 0;
 	}
 	return 1;
+}
+
+static int get_vendor_id(struct android_dev *dev)
+{
+	struct android_usb_product *p = dev->products;
+	int count = dev->num_products;
+	int i;
+
+	if (p) {
+		for (i = 0; i < count; i++, p++) {
+			if (p->vendor_id && product_matches_functions(p))
+				return p->vendor_id;
+		}
+	}
+	/* use default vendor ID */
+	return dev->vendor_id;
 }
 
 static int get_product_id(struct android_dev *dev)
@@ -329,11 +397,11 @@ static int get_product_id(struct android_dev *dev)
 	return dev->product_id;
 }
 
-static int __init android_bind(struct usb_composite_dev *cdev)
+static int android_bind(struct usb_composite_dev *cdev)
 {
 	struct android_dev *dev = _android_dev;
 	struct usb_gadget	*gadget = cdev->gadget;
-	int			gcnum, id, product_id, ret;
+	int			gcnum, id, ret;
 
 	printk(KERN_INFO "android_bind\n");
 
@@ -357,9 +425,6 @@ static int __init android_bind(struct usb_composite_dev *cdev)
 		return id;
 	strings_dev[STRING_SERIAL_IDX].id = id;
 	device_desc.iSerialNumber = id;
-
-	if (gadget->ops->wakeup)
-		android_config_driver.bmAttributes |= USB_CONFIG_ATT_WAKEUP;
 
 	/* register our configuration */
 	ret = usb_add_config(cdev, &android_config_driver);
@@ -386,8 +451,9 @@ static int __init android_bind(struct usb_composite_dev *cdev)
 
 	usb_gadget_set_selfpowered(gadget);
 	dev->cdev = cdev;
-	product_id = get_product_id(dev);
-	device_desc.idProduct = __constant_cpu_to_le16(product_id);
+	device_desc.idVendor = __constant_cpu_to_le16(get_vendor_id(dev));
+	device_desc.idProduct = __constant_cpu_to_le16(get_product_id(dev));
+	cdev->desc.idVendor = device_desc.idVendor;
 	cdev->desc.idProduct = device_desc.idProduct;
 
 	return 0;
@@ -407,12 +473,8 @@ void android_register_function(struct android_usb_function *f)
 
 	printk(KERN_INFO "android_register_function %s\n", f->name);
 	list_add_tail(&f->list, &_functions);
-	_registered_function_count++;
 
-	/* bind our functions if they have all registered
-	 * and the main driver has bound.
-	 */
-	if (dev->config && _registered_function_count == dev->num_functions)
+	if (dev && should_bind_functions(dev))
 		bind_functions(dev);
 }
 int android_show_function(char *buf)
@@ -421,7 +483,7 @@ int android_show_function(char *buf)
 	struct usb_function		*f;
 	list_for_each_entry(f, &android_config_driver.functions, list) {
 		length += sprintf(buf + length, "%s:%s\n", f->name,
-			(f->hidden)?"disable":"enable");
+			(f->disabled)?"disable":"enable");
 	}
 	return length;
 }
@@ -435,34 +497,34 @@ int android_switch_function(unsigned func)
 	list_for_each_entry(f, &android_config_driver.functions, list) {
 		if ((func & (1 << USB_FUNCTION_UMS)) &&
 			!strcmp(f->name, "usb_mass_storage"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_ADB)) &&
 			!strcmp(f->name, "adb"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_RNDIS)) &&
 			!strcmp(f->name, "ether"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_DIAG)) &&
 			!strcmp(f->name, "diag"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_MODEM)) &&
 			!strcmp(f->name, "modem"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_SERIAL)) &&
 			!strcmp(f->name, "serial"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_MTP)) &&
 			!strcmp(f->name, "mtp"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		/* also enable adb with MTP function */
 		else if ((func & (1 << USB_FUNCTION_MTP)) &&
 			!strcmp(f->name, "adb"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else if ((func & (1 << USB_FUNCTION_PROJECTOR)) &&
 			!strcmp(f->name, "projector"))
-			f->hidden = 0;
+			usb_function_set_enabled(f, 1);
 		else
-			f->hidden = 1;
+			usb_function_set_enabled(f, 0);
 	}
 	product_id = get_product_id(dev);
 	device_desc.idProduct = __constant_cpu_to_le16(product_id);
@@ -491,44 +553,87 @@ int android_switch_function(unsigned func)
 	return 0;
 }
 
-void android_enable_function(struct usb_function *f, int enable)
+void update_dev_desc(struct android_dev *dev)
 {
-	struct android_dev *dev = _android_dev;
-	int disable = !enable;
-	int product_id;
+	struct usb_function *f;
+	struct usb_function *last_enabled_f = NULL;
+	int num_enabled = 0;
+	int has_iad = 0;
 
-	if (!!f->hidden != disable) {
-		f->hidden = disable;
-		product_id = get_product_id(dev);
-		device_desc.idProduct = __constant_cpu_to_le16(product_id);
-		if (dev->cdev)
-			dev->cdev->desc.idProduct = device_desc.idProduct;
+	dev->cdev->desc.bDeviceClass = USB_CLASS_PER_INTERFACE;
+	dev->cdev->desc.bDeviceSubClass = 0x00;
+	dev->cdev->desc.bDeviceProtocol = 0x00;
 
-#ifdef CONFIG_USB_ANDROID_RNDIS
-		/* We need to specify the COMM class in the device descriptor
-		* if we are using RNDIS.
-		*/
-		if (!strcmp(f->name, "ether")) {
-			if (enable)
-				dev->cdev->desc.bDeviceClass = USB_CLASS_COMM;
-			else
-				dev->cdev->desc.bDeviceClass = USB_CLASS_PER_INTERFACE;
+	list_for_each_entry(f, &android_config_driver.functions, list) {
+		if (!f->disabled) {
+			num_enabled++;
+			last_enabled_f = f;
+			if (f->descriptors[0]->bDescriptorType ==
+					USB_DT_INTERFACE_ASSOCIATION)
+				has_iad = 1;
 		}
-#endif
+		if (num_enabled > 1 && has_iad) {
+			dev->cdev->desc.bDeviceClass = USB_CLASS_MISC;
+			dev->cdev->desc.bDeviceSubClass = 0x02;
+			dev->cdev->desc.bDeviceProtocol = 0x01;
+			break;
+		}
+	}
 
-#ifdef CONFIG_USB_GADGET_MSM_72K
-	msm_hsusb_request_reset();
+	if (num_enabled == 1) {
+#ifdef CONFIG_USB_ANDROID_RNDIS
+		if (!strcmp(last_enabled_f->name, "rndis")) {
+#ifdef CONFIG_USB_ANDROID_RNDIS_WCEIS
+			dev->cdev->desc.bDeviceClass =
+					USB_CLASS_WIRELESS_CONTROLLER;
 #else
-		/* force reenumeration */
-		if (dev->cdev && dev->cdev->gadget &&
-				dev->cdev->gadget->speed != USB_SPEED_UNKNOWN) {
-			usb_gadget_disconnect(dev->cdev->gadget);
-			msleep(10);
-			usb_gadget_connect(dev->cdev->gadget);
+			dev->cdev->desc.bDeviceClass = USB_CLASS_COMM;
+#endif
 		}
 #endif
 	}
 }
+
+void android_enable_function(struct usb_function *f, int enable)
+{
+	struct android_dev *dev = _android_dev;
+	int disable = !enable;
+
+	if (!!f->disabled != disable) {
+		usb_function_set_enabled(f, !disable);
+
+#ifdef CONFIG_USB_ANDROID_RNDIS
+		if (!strcmp(f->name, "ether")) {
+			struct usb_function		*func;
+			/* Windows does not support other interfaces when RNDIS is enabled,
+			 * so we disable UMS and MTP when RNDIS is on.
+			 */
+			list_for_each_entry(func, &android_config_driver.functions, list) {
+				if (!strcmp(func->name, "usb_mass_storage")
+					|| !strcmp(func->name, "mtp")) {
+					usb_function_set_enabled(func, !enable);
+				}
+			}
+		}
+#endif
+
+		update_dev_desc(dev);
+
+		device_desc.idVendor = __constant_cpu_to_le16(get_vendor_id(dev));
+		device_desc.idProduct = __constant_cpu_to_le16(get_product_id(dev));
+		if (dev->cdev) {
+			dev->cdev->desc.idVendor = device_desc.idVendor;
+			dev->cdev->desc.idProduct = device_desc.idProduct;
+		}
+
+#ifdef CONFIG_USB_GADGET_MSM_72K
+	msm_hsusb_request_reset();
+#else
+	usb_composite_force_reset(dev->cdev);
+#endif
+	}
+}
+
 void android_set_serialno(char *serialno)
 {
 	strings_dev[STRING_SERIAL_IDX].s = serialno;
@@ -540,8 +645,7 @@ int android_get_model_id(void)
 	return dev->product_id;
 }
 
-
-static int __init android_probe(struct platform_device *pdev)
+static int android_probe(struct platform_device *pdev)
 {
 	struct android_usb_platform_data *pdata = pdev->dev.platform_data;
 	struct android_dev *dev = _android_dev;
@@ -553,9 +657,11 @@ static int __init android_probe(struct platform_device *pdev)
 		dev->num_products = pdata->num_products;
 		dev->functions = pdata->functions;
 		dev->num_functions = pdata->num_functions;
-		if (pdata->vendor_id)
+		if (pdata->vendor_id) {
+			dev->vendor_id = pdata->vendor_id;
 			device_desc.idVendor =
 				__constant_cpu_to_le16(pdata->vendor_id);
+		}
 		if (pdata->product_id) {
 			dev->product_id = pdata->product_id;
 			device_desc.idProduct =
