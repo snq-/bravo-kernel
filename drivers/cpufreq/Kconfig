@@ -119,11 +119,11 @@ config CPU_FREQ_DEFAULT_GOV_INTERACTIVE
 	  scaling for workloads that are latency sensitive, typically interactive
 	  workloads..
 
-config CPU_FREQ_DEFAULT_GOV_SMARTASS
-	bool "smartass"
-	select CPU_FREQ_GOV_SMARTASS
+config CPU_FREQ_DEFAULT_GOV_SMARTASS2
+	bool "smartass2"
+	select CPU_FREQ_GOV_SMARTASS2
 	help
-	  Use the CPUFreq governor 'smartass' as default.
+	  Use the CPUFreq governor 'smartassV2' as default.
 
 endchoice
 
@@ -189,11 +189,11 @@ config CPU_FREQ_GOV_INTERACTIVE
 	  Designed for low latency burst workloads. Scaling it done when coming
 	  out of idle instead of polling.
 
-config CPU_FREQ_GOV_SMARTASS
-	tristate "'smartass' cpufreq governor"
+config CPU_FREQ_GOV_SMARTASS2
+	tristate "'smartassV2' cpufreq governor"
 	depends on CPU_FREQ
 	help
-	  'smartass' - a "smart" governor
+	  'smartassV2' - a "smart" governor
 	  If in doubt, say N.
 
 config CPU_FREQ_GOV_CONSERVATIVE
