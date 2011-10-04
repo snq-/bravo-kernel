@@ -35,7 +35,7 @@ struct mutex amp_mutex;
 static struct tpa6130_platform_data *pdata;
 
 static int i2c_on;
-char buffer[2];
+char buffer[3];
 
 static int I2C_TxData(char *txData, int length)
 {
