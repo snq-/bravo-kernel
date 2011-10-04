@@ -384,7 +384,7 @@ static ssize_t ls_adc_show(struct device *dev,
 	return ret;
 }
 
-static DEVICE_ATTR(ls_adc, 0666, ls_adc_show, NULL);
+static DEVICE_ATTR(ls_adc, 0444, ls_adc_show, NULL);
 
 static ssize_t ls_enable_show(struct device *dev,
 				  struct device_attribute *attr, char *buf)
