@@ -118,6 +118,7 @@ static int get_ls_adc_level(uint8_t *data)
 	struct microp_ls_info *li = ls_info;
 	uint8_t i, adc_level = 0;
 	uint16_t adc_value = 0;
+	static uint16_t old_value = 0;
 
 	data[0] = 0x00;
 	data[1] = li->ls_config->channel;
@@ -126,7 +127,7 @@ static int get_ls_adc_level(uint8_t *data)
 
 	read_spi_status();
 
-	adc_value = ls_info->lsauto ? (data[0]<<8 | data[1]) : 0x00;
+	adc_value = old_value = ls_info->lsauto ? (data[0]<<8 | data[1]) : old_value;
 
 	if (adc_value > 0x3FF) {
 		printk(KERN_WARNING "%s: get wrong value: 0x%X\n",
