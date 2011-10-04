@@ -542,6 +542,10 @@ endif
 # This warning generated too much noise in a regular build.
 KBUILD_CFLAGS += $(call cc-option, -Wno-unused-but-set-variable)
 
+# We can make a compiler bug-report, or disable -Waddress. Or maybe we
+# can write the tests in a way that doesn't trigger the compiler bug.
+KBUILD_CFLAGS += $(call cc-option, -Wno-address)
+
 ifdef CONFIG_FRAME_POINTER
 KBUILD_CFLAGS	+= -fno-omit-frame-pointer -fno-optimize-sibling-calls
 else
