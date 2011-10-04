@@ -308,10 +308,7 @@ Get Rsns, get from offset 69H . Rsnsp=1/Rsns
 Judge if this is supported battery
 */
 	mutex_lock(&htc_batt_info.lock);
-	if (di->raw[DS2784_REG_RSNSP] != BATT_RSNSP)
-		htc_batt_info.rep.batt_id = BATT_UNKNOWN;
-	else
-		htc_batt_info.rep.batt_id = BATT_FIRST_SOURCE;
+	htc_batt_info.rep.batt_id = BATT_FIRST_SOURCE;
 	mutex_unlock(&htc_batt_info.lock);
 
 /*
